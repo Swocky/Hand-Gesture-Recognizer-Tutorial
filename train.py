@@ -33,8 +33,11 @@ if len(sys.argv) < 2:
     parser.print_help()
     sys.exit(1)
 
-gpus = [int(i) for i in args.gpus.split(',')]
-print("=> active GPUs: {}".format(args.gpus))
+device = torch.device("cuda" if args.use_gpu and torch.cuda.is_available() else "cpu")
+
+if args.use_gpu:
+    gpus = [int(i) for i in args.gpus.split(',')]
+    print("=> active GPUs: {}".format(args.gpus))
 best_prec1 = 0
 
 # load config file
@@ -73,7 +76,7 @@ def main():
     model = ConvColumn(config['num_classes'])
 
     # multi GPU setting
-    model = torch.nn.DataParallel(model, device_ids=gpus).cuda()
+    model = torch.nn.DataParallel(model, device_ids=gpus).to(device)
 
     # optionally resume from a checkpoint
     if args.resume:
@@ -133,7 +136,7 @@ def main():
     assert len(train_data.classes) == config["num_classes"]
 
     # define loss function (criterion) and pptimizer
-    criterion = nn.CrossEntropyLoss().cuda()
+    criterion = nn.CrossEntropyLoss().to(device)
 
     # define optimizer
     lr = config["lr"]
@@ -209,20 +212,19 @@ def train(train_loader, model, criterion, optimizer, epoch):
 
     for i, (input, target) in enumerate(train_loader):
 
-        input_vars = torch.autograd.Variable(input.cuda())
-        target_var = torch.autograd.Variable(target.cuda(async=True))
+        input, target = input.to(device), target.to(device)
 
         model.zero_grad()
 
         # compute output and loss
-        output = model(input_vars)
-        loss = criterion(output, target_var)
+        output = model(input)
+        loss = criterion(output, target)
 
         # measure accuracy and record loss
-        prec1, prec5 = accuracy(output.data, target, topk=(1, 5))
-        losses.update(loss.data[0], input.size(0))
-        top1.update(prec1[0], input.size(0))
-        top5.update(prec5[0], input.size(0))
+        prec1, prec5 = accuracy(output.detach(), target.detach().cpu(), topk=(1, 5))
+        losses.update(loss.item(), input.size(0))
+        top1.update(prec1.item(), input.size(0))
+        top5.update(prec5.item(), input.size(0))
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
@@ -249,41 +251,41 @@ def validate(val_loader, model, criterion, class_to_idx=None):
     logits_matrix = []
     targets_list = []
 
-    for i, (input, target) in enumerate(val_loader):
+    with torch.no_grad():
+        for i, (input, target) in enumerate(val_loader):
 
-        input_vars = torch.autograd.Variable(input.cuda(), volatile=True)
-        target_var = torch.autograd.Variable(target.cuda(async=True), volatile=True)
+            input, target = input.to(device), target.to(device)
 
-        # compute output and loss
-        output = model(input_vars)
-        loss = criterion(output, target_var)
+            # compute output and loss
+            output = model(input)
+            loss = criterion(output, target)
+
+            if args.eval_only:
+                logits_matrix.append(output.detach().cpu().numpy())
+                targets_list.append(target.detach().cpu().numpy())
+
+            # measure accuracy and record loss
+            prec1, prec5 = accuracy(output.detach(), target.detach().cpu(), topk=(1, 5))
+            losses.update(loss.item(), input.size(0))
+            top1.update(prec1.item(), input.size(0))
+            top5.update(prec5.item(), input.size(0))
+
+            if i % config["print_freq"] == 0:
+                print('Test: [{0}/{1}]\t'
+                      'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                      'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+                      'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
+                          i, len(val_loader), loss=losses, top1=top1, top5=top5))
+
+        print(' * Prec@1 {top1.avg:.3f} Prec@5 {top5.avg:.3f}'
+              .format(top1=top1, top5=top5))
 
         if args.eval_only:
-            logits_matrix.append(output.cpu().data.numpy())
-            targets_list.append(target.cpu().numpy())
-
-        # measure accuracy and record loss
-        prec1, prec5 = accuracy(output.data, target, topk=(1, 5))
-        losses.update(loss.data[0], input.size(0))
-        top1.update(prec1[0], input.size(0))
-        top5.update(prec5[0], input.size(0))
-
-        if i % config["print_freq"] == 0:
-            print('Test: [{0}/{1}]\t'
-                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
-                  'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
-                      i, len(val_loader), loss=losses, top1=top1, top5=top5))
-
-    print(' * Prec@1 {top1.avg:.3f} Prec@5 {top5.avg:.3f}'
-          .format(top1=top1, top5=top5))
-
-    if args.eval_only:
-        logits_matrix = np.concatenate(logits_matrix)
-        targets_list = np.concatenate(targets_list)
-        print(logits_matrix.shape, targets_list.shape)
-        save_results(logits_matrix, targets_list, class_to_idx, config)
-    return losses.avg, top1.avg, top5.avg
+            logits_matrix = np.concatenate(logits_matrix)
+            targets_list = np.concatenate(targets_list)
+            print(logits_matrix.shape, targets_list.shape)
+            save_results(logits_matrix, targets_list, class_to_idx, config)
+        return losses.avg, top1.avg, top5.avg
 
 
 def save_results(logits_matrix, targets_list, class_to_idx, config):
