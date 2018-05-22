@@ -9,24 +9,23 @@ import pickle
 
 import torch
 import torch.nn as nn
-import torch.nn.parallel
-import torch.backends.cudnn as cudnn
-import torch.optim
-import torch.utils.data
 
-from data_loader_jpeg import VideoFolder
+from data_loader import VideoFolder
 from callbacks import PlotLearning, MonitorLRDecay, AverageMeter
 from model import ConvColumn
 from torchvision.transforms import *
 
+str2bool = lambda x: (str(x).lower() == 'true')
 
 parser = argparse.ArgumentParser(
     description='PyTorch Jester Training using JPEG')
 parser.add_argument('--config', '-c', help='json config file path')
-parser.add_argument('--eval_only', '-e',
+parser.add_argument('--eval_only', '-e', default=False, type=str2bool,
                     help="evaluate trained model on validation data.")
 parser.add_argument(
-    '--resume', '-r', help="resume training from given checkpoint.")
+    '--resume', '-r', default=False, type=str2bool, help="resume training from given checkpoint.")
+parser.add_argument('--use_gpu', default=True, type=str2bool,
+                    help="flag to use gpu or not.")
 parser.add_argument('--gpus', '-g', help="gpu ids for use.")
 
 args = parser.parse_args()
@@ -89,9 +88,6 @@ def main():
         else:
             print("=> no checkpoint found at '{}'".format(
                 config['checkpoint']))
-
-    # find best cudnn configuration
-    cudnn.benchmark = False
 
     transform = Compose([
         CenterCrop(84),
