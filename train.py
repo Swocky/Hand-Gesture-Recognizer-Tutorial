@@ -22,8 +22,8 @@ parser = argparse.ArgumentParser(
 parser.add_argument('--config', '-c', help='json config file path')
 parser.add_argument('--eval_only', '-e', default=False, type=str2bool,
                     help="evaluate trained model on validation data.")
-parser.add_argument(
-    '--resume', '-r', default=False, type=str2bool, help="resume training from given checkpoint.")
+parser.add_argument('--resume', '-r', default=False, type=str2bool,
+                    help="resume training from given checkpoint.")
 parser.add_argument('--use_gpu', default=True, type=str2bool,
                     help="flag to use gpu or not.")
 parser.add_argument('--gpus', '-g', help="gpu ids for use.")
