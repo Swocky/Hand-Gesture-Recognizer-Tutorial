@@ -38,6 +38,7 @@ device = torch.device("cuda" if args.use_gpu and torch.cuda.is_available() else 
 if args.use_gpu:
     gpus = [int(i) for i in args.gpus.split(',')]
     print("=> active GPUs: {}".format(args.gpus))
+
 best_prec1 = 0
 
 # load config file
@@ -76,7 +77,8 @@ def main():
     model = ConvColumn(config['num_classes'])
 
     # multi GPU setting
-    model = torch.nn.DataParallel(model, device_ids=gpus).to(device)
+    if args.use_gpu:
+        model = torch.nn.DataParallel(model, device_ids=gpus).to(device)
 
     # optionally resume from a checkpoint
     if args.resume:
