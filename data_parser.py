@@ -8,9 +8,9 @@ ListDataJpeg = namedtuple('ListDataJpeg', ['id', 'label', 'path'])
 class JpegDataset(object):
 
     def __init__(self, csv_path_input, csv_path_labels, data_root):
-        self.csv_data = self.read_csv_input(csv_path_input, data_root)
         self.classes = self.read_csv_labels(csv_path_labels)
         self.classes_dict = self.get_two_way_dict(self.classes)
+        self.csv_data = self.read_csv_input(csv_path_input, data_root)
 
     def read_csv_input(self, csv_path, data_root):
         csv_data = []
@@ -21,7 +21,8 @@ class JpegDataset(object):
                                     row[1],
                                     os.path.join(data_root, row[0])
                                     )
-                csv_data.append(item)
+                if row[1] in self.classes:
+                    csv_data.append(item)
         return csv_data
 
     def read_csv_labels(self, csv_path):
