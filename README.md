@@ -5,12 +5,7 @@ Scripts for TwentyBN Hand Gesture Recognizer Tutorials on [TwentyBN's blog](http
 # Requirements
 
 - Python 3.x
-- PyTorch
-- GulpIO (optional)
-- nocache
-
-# Procedures
-
+- PyTorch 0.4.0
 
 ## Download *Jester* Dataset
 
@@ -19,3 +14,14 @@ gestures. The dataset is available at: https://www.twentybn.com/datasets/jester
 
 Besides downloading the data, please make sure to download all the **CSV files** as well.
 (incomplete)
+
+# CPU/GPU option
+Use `--use_gpu` flag to specify whether you want to use GPUs or CPUs for your computation
+
+# Procedure
+
+## Train
+`python train.py --config configs/config.json -g 0`
+
+## Test
+`python train.py --config configs/config.json -g 0 -r True`
