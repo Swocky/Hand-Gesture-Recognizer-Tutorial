@@ -6,6 +6,7 @@ import json
 import glob
 import signal
 import pickle
+import numpy as np
 
 import torch
 import torch.nn as nn
@@ -254,7 +255,7 @@ def validate(val_loader, model, criterion, class_to_idx=None):
     targets_list = []
 
     with torch.no_grad():
-        for i, (input, target) in enumerate(val_loader):
+        for i, (input, target, _) in enumerate(val_loader):
 
             input, target = input.to(device), target.to(device)
 

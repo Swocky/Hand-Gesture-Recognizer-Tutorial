@@ -48,7 +48,10 @@ class VideoFolder(torch.utils.data.Dataset):
         # format data to torch
         data = torch.cat(imgs)
         data = data.permute(1, 0, 2, 3)
-        return (data, target_idx)
+        if self.is_val:
+            return (data, target_idx, item.id)
+        else:
+            return (data, target_idx)
 
     def __len__(self):
         return len(self.csv_data)
