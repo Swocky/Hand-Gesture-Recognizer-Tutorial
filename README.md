@@ -1,6 +1,6 @@
 # Hand Gesture Recognizer Tutorial
 
-Scripts for TwentyBN Hand Gesture Recognizer Tutorials on [TwentyBN's blog](https://medium.com/twentybn). These scripts are modified from  TwentyBN's [GulpIO-benchmarks](https://github.com/TwentyBN/GulpIO-benchmarks) repository, written by [Raghav Goyal](https://github.com/raghavgoyal14) and the TwentyBN team.
+Scripts for 20BN Hand Gesture Recognition Model. These scripts are modified from TwentyBN's [GulpIO-benchmarks](https://github.com/TwentyBN/GulpIO-benchmarks) repository, written by [Raghav Goyal](https://github.com/raghavgoyal14) and the TwentyBN team.
 
 # Requirements
 
@@ -13,7 +13,6 @@ For building a hand gesture recognizer, we will use the [Jester Dataset](https:/
 gestures. The dataset is available at: https://www.twentybn.com/datasets/jester
 
 Besides downloading the data, please make sure to download all the **CSV files** as well.
-(incomplete)
 
 # CPU/GPU option
 Use `--use_gpu` flag to specify whether you want to use GPUs or CPUs for your computation
